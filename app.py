@@ -1,76 +1,34 @@
 from flask import Flask, request, jsonify
-import requests
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-OLLAMA_URL = os.getenv("OLLAMA_URL")
-MODEL_NAME = os.getenv("MODEL_NAME")
+from memory.session_manager import SessionManager
+from services.llm_service import LLMService
 
 app = Flask(__name__)
 
-conversation_history = [
-    {"role": "system", "content": "Você é um assistente útil e técnico."}
-]
-
-def chamar_modelo_local(messages):
-    """
-    Envia as mensagens para o PHi3 (rodando localmente)
-    e retorna a resposta do modelo.
-    """
-
-    response = requests.post(
-        f"{OLLAMA_URL}/api/chat",  
-        json={
-            "model": MODEL_NAME, 
-            "messages": messages,
-            "stream": False  
-        },
-    )
-
-    resposta_json = response.json()
-
-    return resposta_json["message"]["content"]
+session_manager = SessionManager()
+llm_service = LLMService()
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    """
-    Endpoint que recebe mensagem do usuário
-    e retorna resposta do agente.
-    """
-
-    data = request.get_json()
-
-    if not data:
-        return jsonify({"error": "JSON não enviado corretamente"}), 400
-
+    data = request.json
+    session_id = data.get("session_id")
     user_message = data.get("message")
 
-    if not user_message:
-        return jsonify({"error": "Mensagem não fornecida"}), 400
+    if not session_id or not user_message:
+        return jsonify({"error": "session_id and message are required"}), 400
 
-    conversation_history.append({
-        "role": "user",
-        "content": user_message
-    })
-    
-    system_mensage = conversation_history[0]
-    
-    recent_msg = conversation_history[1:][-10:]
-    
-    conversation_history[:] = [system_mensage] + recent_msg
+    session_manager.add_message(session_id, "user", user_message)
 
-    assistant_reply = chamar_modelo_local(conversation_history)
+    history = session_manager.get_history(session_id)
 
-    conversation_history.append({
-        "role": "assistant",
-        "content": assistant_reply
-    })
+    try:
+        assistant_reply = llm_service.generate_response(history)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-    return jsonify({
-        "response": assistant_reply
-    })
+    session_manager.add_message(session_id, "assistant", assistant_reply)
+
+    return jsonify({"response": assistant_reply})
+
 
 if __name__ == "__main__":
     app.run(debug=True)
