@@ -1,6 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
+from agent_config import SYSTEM_PROMPT
 
 load_dotenv()
 
@@ -9,6 +10,10 @@ MODEL_NAME = os.getenv("MODEL_NAME")
 
 class LLMService:
     def generate_response(self, messages):
+        messages_with_system = [
+            {"role": "system", "content": SYSTEM_PROMPT}
+        ] + messages
+
         payload = {
             "model": MODEL_NAME,
             "messages": messages,
