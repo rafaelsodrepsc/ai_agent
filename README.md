@@ -1,14 +1,40 @@
-# Agente de IA com Flask e Ollama
+# Agente Mentor de Programação com IA
 
-## Descrição
+## Visão Geral
 
-Este projeto implementa um agente de IA utilizando:
+Este projeto implementa um agente conversacional de IA atuando como **Mentor de Programação técnico e direto**, utilizando:
 
-- Flask para criação de uma API REST
-- Ollama para execução local de um modelo LLM
-- Controle básico de histórico de conversa
+- Flask (API REST backend)
+- Ollama (execução local de modelo LLM)
+- Memória de conversa baseada em sessão
+- Arquitetura modular (Camada de Serviço + Camada de Memória)
+- Interface de chat via terminal (CLI)
 
-O sistema recebe mensagens via requisição HTTP, envia o histórico para o modelo local e retorna a resposta gerada.
+O agente foi projetado para orientar usuários com explicações claras, objetivas e estruturadas, incentivando raciocínio técnico.
+
+---
+
+## Arquitetura
+
+```
+.
+├── app.py                  # Entrada principal da API Flask
+├── chat.py                 # Interface de terminal (CLI)
+├── agent_config.py         # Configuração do prompt do sistema
+├── services/
+│   └── llm_service.py      # Camada de integração com o LLM
+├── memory/
+│   └── session_manager.py  # Gerenciamento de memória por sessão
+├── requirements.txt
+└── README.md
+```
+
+### Camadas
+
+- **Flask (Camada de Controle)** → Gerencia requisições HTTP
+- **SessionManager (Camada de Memória)** → Gerencia histórico por sessão
+- **LLMService (Camada de Serviço)** → Comunicação com o Ollama
+- **System Prompt** → Define identidade e comportamento do agente
 
 ---
 
@@ -16,7 +42,13 @@ O sistema recebe mensagens via requisição HTTP, envia o histórico para o mode
 
 - Python 3.10+
 - Ollama instalado
-- Modelo baixado no Ollama (ex: `phi3:mini`)
+- Modelo baixado no Ollama (exemplo: `phi3:mini`)
+
+Instalar modelo:
+
+```bash
+ollama pull phi3:mini
+```
 
 ---
 
@@ -26,27 +58,28 @@ O sistema recebe mensagens via requisição HTTP, envia o histórico para o mode
 
 ```bash
 git clone <url-do-repositorio>
-cd nome-do-projeto
+cd ai_agent
 ```
-### 2\. Criar ambiente virtual
+
+### 2. Criar ambiente virtual
 
 ```bash
 python -m venv venv
 ```
 
-Ativar no Windows:
+Ativar (Windows):
 
 ```bash
 venv\Scripts\activate
 ```
 
-Ativar no Linux/Mac:
+Ativar (Linux/Mac):
 
 ```bash
 source venv/bin/activate
 ```
 
-### 3\. Instalar dependências
+### 3. Instalar dependências
 
 ```bash
 pip install -r requirements.txt
@@ -54,79 +87,109 @@ pip install -r requirements.txt
 
 ---
 
-## Configuração
+## Configuração de Ambiente
 
-Criar um arquivo `.env` na raiz do projeto com o seguinte conteúdo:
+Criar um arquivo `.env` na raiz do projeto:
 
 ```bash
 OLLAMA_URL=http://localhost:11434
 MODEL_NAME=phi3:mini
 ```
 
-Certifique-se de que o modelo está instalado:
-
-```bash
-ollama pull phi3:mini
-```
-
 ---
 
-## Execução
+## Executando a Aplicação
 
-Iniciar o servidor:
+### Iniciar o servidor da API
 
 ```bash
 python app.py
 ```
 
-A API ficará disponível em:
+O servidor ficará disponível em:
 
-```bash
+```
 http://127.0.0.1:5000
 ```
 
 ---
 
-## Uso
+## Utilizando a Interface de Terminal
 
-### Endpoint
+Em outro terminal, execute:
 
 ```bash
-POST /chat
+python chat.py
 ```
 
-### Exemplo de requisição (JSON)
+Agora você pode conversar diretamente com o Mentor de Programação.
+
+Para encerrar a sessão, digite:
+
+```
+exit
+```
+
+---
+
+## Endpoint da API
+
+### POST /chat
+
+Requisição:
 
 ```json
 {
-  "message": "Explique o que é um agente de IA"
+  "session_id": "usuario1",
+  "message": "Explique encapsulamento em POO"
 }
 ```
 
-### Exemplo de resposta
+Resposta:
 
 ```json
 {
-  "response": "..."
+  "response": "Encapsulamento é..."
 }
 ```
 
 ---
 
-## Estrutura do Projeto
+## Funcionalidades
 
-```bash
-.
-├── app.py
-├── requirements.txt
-├── .env
-├── .gitignore
-└── README.md
-```
+- Isolamento de conversa por sessão
+- Controle de histórico com janela deslizante
+- Prompt de sistema configurável
+- Arquitetura modular e organizada
+- Interface de chat via terminal
 
 ---
 
-## Observações
+## Limitações
 
-- O histórico da conversa é mantido em memória.
-- A aplicação não implementa isolamento por múltiplos usuários.
+- Histórico armazenado apenas em memória (RAM)
+- Não é thread-safe
+- Não possui autenticação
+- Não recomendado para produção
+
+---
+
+## Melhorias Futuras
+
+- Persistência em banco de dados (Redis/PostgreSQL)
+- Controle de contexto baseado em tokens
+- Resumo automático de conversas longas
+- Respostas com streaming
+- Interface web
+- Autenticação e suporte multiusuário
+
+---
+
+## Objetivo do Projeto
+
+Este projeto foi desenvolvido para:
+
+- Estudar arquitetura de agentes conversacionais
+- Compreender organização modular de backend
+- Praticar integração com LLMs locais
+- Aprimorar boas práticas de estrutura de software
